@@ -1,0 +1,33 @@
+graph TD
+    subgraph SN["Sensor Nodes (Producers)"]
+        E1[ECG Lead-I]
+        E2[ECG Lead-II]
+        A1[ACCEL 3-Axis]
+        S1[SPO2]
+        EN[ENV Multi]
+        Others[... + 3 Nodes]
+    end
+
+    Q1[(RAW_DATA_Q)]
+
+    subgraph FE["Fusion Engine (MIMD)"]
+        W1[Worker 1]
+        W2[Worker 2]
+        W...[Worker 3-8]
+    end
+
+    Q2[(FUSION_Q)]
+    Q3[(LOG_Q)]
+
+    E1 & E2 & A1 & S1 & EN & Others --> |Enqueue| Q1
+    Q1 --> |Dequeue| W1 & W2 & W...
+    
+    W1 & W2 & W... --> |Fuse Metrics| Q2
+    W1 & W2 & W... -.-> |Anomalies/Events| Q3
+    
+    subgraph FO["Frontend/Output"]
+        D[Dashboard GUI]
+        L[Logger File]
+    end
+    
+    Q2 --> |Render| D
