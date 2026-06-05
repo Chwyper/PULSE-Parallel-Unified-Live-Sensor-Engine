@@ -66,7 +66,7 @@ Aliran data (*Data Flow*) didesain dalam bentuk graf tertutup seperti ini:
 
 ```mermaid
 graph TD
-    subgraph Sensor Nodes (Producers)
+    subgraph SN["Sensor Nodes (Producers)"]
         E1[ECG Lead-I]
         E2[ECG Lead-II]
         A1[ACCEL 3-Axis]
@@ -77,7 +77,7 @@ graph TD
 
     Q1[(RAW_DATA_Q)]
 
-    subgraph Fusion Engine (MIMD)
+    subgraph FE["Fusion Engine (MIMD)"]
         W1[Worker 1]
         W2[Worker 2]
         W...[Worker 3-8]
@@ -92,7 +92,7 @@ graph TD
     W1 & W2 & W... --> |Fuse Metrics| Q2
     W1 & W2 & W... -.-> |Anomalies/Events| Q3
     
-    subgraph Frontend/Output
+    subgraph FO["Frontend/Output"]
         D[Dashboard GUI]
         L[Logger File]
     end
