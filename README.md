@@ -1,73 +1,180 @@
-<p align="center">
-  <img src="./images/cuffncode.png" width="200">
-</p>
+<div align="center">
+  
+# 💓 PULSE  
+**Parallel Unified Live Sensor Engine**
 
-<h4 align="center">This project is funded by IFAC Activity Fund (July 2025 to June 2026)</h4>
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Academic](https://img.shields.io/badge/Course-IFB--206-orange.svg)]()
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
-__CuffnCode__ is a retrofitted blood pressure measurement system for teaching and research. In the long term, it aims to become an overinstrumented platform for developing and testing signal processing and control algorithms.
+Sistem Pemantauan Atlet Berbasis Wearable *(Software Simulation)*  
+Dikembangkan untuk tugas mata kuliah **Parallel Computing & Distributed Systems (IFB-206)**  
+Institut Teknologi Nasional (ITENAS) Bandung.
 
-## Retrofitted pump system
+</div>
 
-<img src="./images/complete_device.png" width="600"> 
+---
 
-## Analog Front End Design
-A reproducible, low-noise analog front end for millivolt bridge sensors (e.g., MPS20N0040D, typically used for __hobbyist__ sphygmomanometer), using AD620 instrumentation amplifier and TLC2272 level shift. This analog front end should also work for other millivolt instruments.
+## 📖 Deskripsi
 
+**PULSE** adalah *engine* simulasi berbasis perangkat lunak untuk sistem pemantauan fisiologis atlet secara *real-time*. Proyek ini dirancang sebagai bentuk implementasi langsung dari teori arsitektur *embedded terdistribusi* (seperti pada perangkat biomedis berbasis STM32) yang dipetakan menjadi aplikasi perangkat lunak multi-proses murni.
 
-### TINA-TI
+Menggunakan prinsip komputasi paralel untuk melampaui batasan Global Interpreter Lock (GIL) pada Python, PULSE menyimulasikan aliran data dari 8 sensor fisik berbeda secara asinkron, memproses *feature extraction* paralel penuh, dan menampilkannya pada dashboard SCADA secara sinkron dan interaktif.
 
-AC simulation with TINA-TI:
+## 📋 Daftar Isi
 
-<img src="./images/AFE.png" width="600"> 
+- [Fitur Utama](#-fitur-utama)
+- [Konsep Paralel yang Diterapkan](#-konsep-paralel-yang-diterapkan)
+- [Arsitektur Sistem](#-arsitektur-sistem)
+- [Prasyarat & Instalasi](#-prasyarat--instalasi)
+- [Cara Penggunaan](#-cara-penggunaan)
+- [Struktur Repositori](#-struktur-repositori)
+- [Lisensi](#-lisensi)
 
-<img src="./images/tina-ac-diag.jpg" width="500"> 
+---
 
-Instrumentation amplifier gain:
+## ✨ Fitur Utama
 
-$$ G = 1 + \frac{49.4\text{k}\Omega}{R_g} = 1 + \frac{49.4\text{k}\Omega}{470} \approx 105$$
+- **Simulasi Sinyal Realistis**: Generator sinyal sintetik fisiologis (ECG, Accelerometer, SpO2, Suhu, GSR, Laju Napas) yang berubah sesuai fase lari (Resting, Warmup, Sprint, Cooldown, Recovery).
+- **Dashboard SCADA**: Visualisasi *live chart* berkecepatan tinggi menggunakan kolaborasi `Tkinter` dan `Matplotlib`. Memiliki peringatan kondisi *emergency* yang responsif.
+- **Deteksi Anomali**: Triase medis secara langsung yang mendeteksi indikasi kondisi bahaya, misal hipoksia (SpO2 rendah), takipnea, atau hipertermia.
+- **Benchmarking Terintegrasi**: Mengukur *speedup* pemrosesan sekuensial vs paralel secara transparan untuk memvalidasi performa algoritma.
+- **Log Data Persisten**: Hasil pemrosesan direkam pada file `.csv` (*thread-safe* file writing).
 
-TLC2272 offset:
+---
 
-$$ \frac{56 \text{k}}{47\text{k} + 56 \text{k}} \times 3.3 V \approx 1.5 V$$
+## 🧠 Konsep Paralel yang Diterapkan
 
+Sistem dibangun dari nol untuk merepresentasikan teori dari komputasi terdistribusi:
 
+1. **MIMD (Multiple Instruction, Multiple Data)**
+   Memanfaatkan `multiprocessing.Pool`, di mana setiap unit data dari 8 tipe sensor (*Multiple Data*) diproses secara paralel menggunakan fungsi/jalur logika yang unik sesuai sensor tersebut (*Multiple Instructions*).
+2. **Pola Producer-Consumer (Pipeline Processing)**
+   Arsitektur aliran data diisolasi ke dalam 4 stage queue (*multiprocessing.Queue*):
+   `RAW_DATA_Q` ➔ `PROCESSED_Q` ➔ `FUSION_Q` ➔ `LOG_Q`.
+3. **Analisis Hukum Amdahl**
+   Menghitung fraksi paralel kode ($P$) dan limitasi teoretis kecepatan performa tak hingga ($N \to \infty$) melalui alat evaluasi internal (`benchmarker.py`).
+4. **Fault Tolerance & Penanganan Deadlock**
+   PULSE tahan terhadap fluktuasi latensi simulasi dan interupsi transmisi. Menerapkan 3 tingkat ekskalasi pemulihan: *Re-sample*, *Last Known Value fallback*, hingga *Node Exclusion*.
 
-### MPS20N0040D
-The MPS20N0040D is a millivolt-level bridge (≈50–100 mV full-scale; 4–6 kΩ)
+---
 
-| <img src="./images/mps20n0040d_1.png" width="300"> | <img src="./images/mps20n0040d_2.png" width="300"> |
-| ----------------------------------------- | ----------------------------------------- |
+## 📊 Arsitektur Sistem
 
-### TLC2272 (Dual, Low-Noise, Rail-To-Rail Operational Amplifier)
-This will be used to offset the instrumentation amplifier, giving headroom for possible undershoot or for signal that goes both ways (positive and negative).
+Aliran data (*Data Flow*) didesain dalam bentuk graf tertutup seperti ini:
 
-<img src="./images/tlc2272.png" width="300"> 
+```mermaid
+graph TD
+    subgraph Sensor Nodes (Producers)
+        E1[ECG Lead-I]
+        E2[ECG Lead-II]
+        A1[ACCEL 3-Axis]
+        S1[SPO2]
+        EN[ENV Multi]
+        Others[... + 3 Nodes]
+    end
 
-### AD620
-This is the instrumentation amplifier that is relatively cheap and widely available in Indonesian market.
+    Q1[(RAW_DATA_Q)]
 
-| <img src="./images/ad620_1.png" width="150"> | <img src="./images/ad620_2.png" width="150"> |
-| ----------------------------------------- | ----------------------------------------- |
+    subgraph Fusion Engine (MIMD)
+        W1[Worker 1]
+        W2[Worker 2]
+        W...[Worker 3-8]
+    end
 
-## Digital Controller
-We will use STM32F411CE (the black pill) as our digital processor.
+    Q2[(FUSION_Q)]
+    Q3[(LOG_Q)]
 
-| <img src="./images/prototype1.png" width="250"> | <img src="./images/prototype2.png" width="330"> |
-| ----------------------------------------- | ----------------------------------------- |
+    E1 & E2 & A1 & S1 & EN & Others --> |Enqueue| Q1
+    Q1 --> |Dequeue| W1 & W2 & W...
+    
+    W1 & W2 & W... --> |Fuse Metrics| Q2
+    W1 & W2 & W... -.-> |Anomalies/Events| Q3
+    
+    subgraph Frontend/Output
+        D[Dashboard GUI]
+        L[Logger File]
+    end
+    
+    Q2 --> |Render| D
+    Q3 --> |Write CSV| L
+```
 
-## Safety & Notes
+---
 
-- The MPS20N0040D is fragile—avoid over-pressure.
-- If powering from USB, beware ground noise from the host PC. A ferrite on the USB cable can help.
+## 🛠️ Prasyarat & Instalasi
 
-## Next-to-Do
-- 50/60 Hz notch filter (hum killer).
-- PCB layouting.
-- Performance evaluations.
+Pastikan komputer/server Anda menggunakan **Python 3.10 atau lebih baru**. 
 
-## Credits
+1. **Clone repositori**
+   ```bash
+   git clone https://github.com/username/PULSE-Engine.git
+   cd PULSE-Engine
+   ```
 
-- Instrumentation amplifier intro: https://www.youtube.com/watch?v=O0-iczIq1aU
-- INA333 review with AD620 suggestion: https://blog.robertelder.org/cjmcu-333-ina-333-instrumentation-amplifier/
-- A Designer’s Guide to Instrumentation Amplifiers (3rd Edition) https://www.analog.com/media/en/training-seminars/design-handbooks/designers-guide-instrument-amps-complete.pdf
+2. **Buat Virtual Environment (Direkomendasikan)**
+   ```bash
+   # Windows
+   python -m venv .venv
+   .venv\Scripts\activate
 
+   # Linux/macOS
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. **Install Dependensi**
+   ```bash
+   pip install -r req.txt
+   ```
+   *Catatan: Pustaka pihak ketiga yang digunakan hanya `numpy`, `matplotlib`, dan `psutil`.*
+
+---
+
+## 🚀 Cara Penggunaan
+
+Gunakan *entry point* dari `main.py` untuk menjalankan aplikasi:
+
+```bash
+python main.py
+```
+
+*(Untuk OS Windows Command Prompt / PowerShell, tambahkan flag UTF-8 jika tabel pada console acak-acakan)*:
+```bash
+python -X utf8 main.py
+```
+
+### Operasional Dashboard
+
+1. **Memulai Sesi**: Klik tombol `▶ START` pada menu navigasi bawah untuk memulai pengambilan sampel.
+2. **Monitoring Fase**: Lari akan berganti fase secara otomatis (RESTING ➔ WARMUP ➔ SPRINT ➔ COOLDOWN ➔ RECOVERY). 
+3. **Benchmarking**: Klik tombol `📊 BENCHMARK`. Sistem akan mensimulasikan tugas pemrosesan *heavy-load* di *background*, dan di akhir akan melaporkan kalkulasi efisiensi dan mencetak grafik `.png` pada direktori `logs/`.
+4. **Penyimpanan**: Klik `💾 SAVE LOG` untuk mengekstrak rangkuman sesi pada `logs/summary.csv`.
+
+---
+
+## 📁 Struktur Repositori
+
+```text
+PULSE/
+├── main.py                # Titik masuk aplikasi, orchestrator startup/shutdown
+├── config.py              # Konfigurasi global (Warna UI, Parameter Sistem, Range Medis)
+├── dashboard.py           # GUI SCADA Tkinter & Visualisasi Matplotlib
+├── benchmarker.py         # Analisis performa sekuensial vs paralel (Amdahl's Law)
+├── fusion_engine.py       # Engine perhitungan feature extraction multiprocess (MIMD)
+├── queue_manager.py       # Abstraksi multiprocessing.Queue Pipeline
+├── session_controller.py  # Sistem state-machine fase sesi & kolektor sampel
+├── sensor_nodes.py        # Simulasi/Generator Sinyal Wearable Biomedis
+├── logger.py              # Sistem persisten data dan terminal log writer
+├── req.txt                # Berkas dependensi pustaka
+└── logs/                  # [Dihasilkan] Direktori penyimpanan CSV / Grafik
+```
+
+---
+
+## 📄 Lisensi
+
+Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih lanjut.
+
+<p align="right">(<a href="#readme-top">kembali ke atas</a>)</p>
