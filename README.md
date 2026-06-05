@@ -1,10 +1,35 @@
-# Distributed Wearable Athlete Simulator (PULSE)
-TUGAS IFB-206 KOMPUTASI PARAREL & SYSTEM TERDISTRIBUSI
-Najwa Hikmatyar - 152024162
+<div align="center">
 
-Parallel Computing & Distributed Systems Simulation
+# 💓 PULSE
+**Distributed Wearable Athlete Simulator (Parallel Unified Live Sensor Engine)**
 
-Python Version Framework Matplotlib License Category
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Framework](https://img.shields.io/badge/Framework-Tkinter-lightgrey.svg)]()
+[![Matplotlib](https://img.shields.io/badge/Data_Viz-Matplotlib-orange.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+*TUGAS IFB-206 KOMPUTASI PARAREL & SISTEM TERDISTRIBUSI*  
+**Najwa Hikmatyar - 152024162**
+
+</div>
+
+---
+
+## 📋 Table of Contents
+- [1. Project Overview](#1-project-overview)
+- [2. Key Features](#2-key-features)
+- [3. System Architecture](#3-system-architecture)
+- [4. Distributed System Design](#4-distributed-system-design)
+- [5. Parallel Computing Implementation](#5-parallel-computing-implementation)
+- [6. Virtual Embedded System Architecture](#6-virtual-embedded-system-architecture)
+- [7. Dashboard Features](#7-dashboard-features)
+- [8. Benchmark Results](#8-benchmark-results)
+- [9. PULSE Analytics & Logging](#9-pulse-analytics--logging)
+- [10. Installation & Requirements](#10-installation--requirements)
+- [11. How To Run](#11-how-to-run)
+- [12. Project Structure](#12-project-structure)
+
+---
 
 ## 1. Project Overview
 PULSE (Parallel Unified Live Sensor Engine) is an advanced, industrial-grade simulation system designed to model a smart wearable athlete monitoring system. Developed as a final project for the Parallel Computing and Distributed Systems course, this system highlights the practical application of:
