@@ -117,7 +117,7 @@ def process_node_data(args: tuple) -> dict:
         win_size  = 30
         gravity   = 1.0
         mag_win   = [
-            max(0, mag - gravity + random.gauss(0, 0.05))
+            mag - gravity + random.gauss(0, 0.05)
             for _ in range(win_size)
         ]
         # Hitung zero-crossing (sign change) dari filtered magnitude

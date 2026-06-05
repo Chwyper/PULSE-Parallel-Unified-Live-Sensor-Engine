@@ -13,7 +13,8 @@ import time
 import matplotlib
 matplotlib.use("Agg")   # non-interactive backend — aman tanpa display
 # pyrefly: ignore [missing-import]
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 # pyrefly: ignore [missing-import]
 import matplotlib.gridspec as gridspec
 # pyrefly: ignore [missing-import]
@@ -304,7 +305,8 @@ class PulseBenchmarker:
         speedup = metrics["speedup"]
 
         # --- Setup figure dark theme ---
-        fig = plt.figure(figsize=(14, 9), facecolor=COLOR_BG)
+        fig = Figure(figsize=(14, 9), facecolor=COLOR_BG)
+        canvas = FigureCanvasAgg(fig)
         fig.suptitle(
             "PULSE Benchmark — Sequential vs Parallel Fusion",
             color=COLOR_TEXT, fontsize=15, fontweight="bold", y=0.98,
@@ -469,7 +471,6 @@ class PulseBenchmarker:
         out_path = os.path.join("logs", "benchmark_chart.png")
         fig.savefig(out_path, dpi=130, bbox_inches="tight",
                     facecolor=COLOR_BG, edgecolor="none")
-        plt.close(fig)
 
         return os.path.abspath(out_path)
 

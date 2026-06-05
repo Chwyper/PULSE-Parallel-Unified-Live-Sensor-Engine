@@ -30,11 +30,11 @@ class SessionPhase(Enum):
     RECOVERY = auto()   # Pemulihan — kembali ke baseline
 
 PHASE_DURATION_S = {
-    SessionPhase.RESTING:  30,   # detik
-    SessionPhase.WARMUP:   60,
-    SessionPhase.SPRINT:   45,
-    SessionPhase.COOLDOWN: 60,
-    SessionPhase.RECOVERY: 30,
+    SessionPhase.RESTING:  5,    # dipercepat untuk demo (aslinya 30s)
+    SessionPhase.WARMUP:   5,    # (aslinya 60s)
+    SessionPhase.SPRINT:   5,    # (aslinya 45s)
+    SessionPhase.COOLDOWN: 5,    # (aslinya 60s)
+    SessionPhase.RECOVERY: 5,    # (aslinya 30s)
 }
 
 # =============================================================================
