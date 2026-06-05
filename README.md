@@ -1,180 +1,131 @@
-<div align="center">
-  
-# 💓 PULSE  
-**Parallel Unified Live Sensor Engine**
+# Distributed Wearable Athlete Simulator (PULSE)
+KELOMPOK TUGAS IFB-206 KOMPUTASI PARAREL & SYSTEM TERDISTRIBUSI
+Member 1 : Najwa Hikmatyar - 152024162
 
-[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Academic](https://img.shields.io/badge/Course-IFB--206-orange.svg)]()
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
+Parallel Computing & Distributed Systems Simulation
 
-Sistem Pemantauan Atlet Berbasis Wearable *(Software Simulation)*  
-Dikembangkan untuk tugas mata kuliah **Parallel Computing & Distributed Systems (IFB-206)**  
-Institut Teknologi Nasional (ITENAS) Bandung.
+Python Version Framework Matplotlib License Category
 
-</div>
+## 1. Project Overview
+PULSE (Parallel Unified Live Sensor Engine) is an advanced, industrial-grade simulation system designed to model a smart wearable athlete monitoring system. Developed as a final project for the Parallel Computing and Distributed Systems course, this system highlights the practical application of:
 
----
+- **Parallel Computing**: Simulating simultaneous multi-sensor physiological data extraction by distributing workload processing across separate CPU cores.
+- **Distributed Processing & IPC**: Separating system responsibilities into individual virtual nodes that communicate asynchronously via multiprocessing queues.
+- **Virtual Embedded Architecture**: Modeling hardware boundaries (ECG, ACCEL, SpO2, ENV Sensors) virtually through independent, isolated Python processes.
+- **Realtime SCADA Interface**: Providing a high-fidelity monitoring HMI (Human-Machine Interface) for system telemetry, analytics, logging, and benchmarking.
 
-## 📖 Deskripsi
+By combining these paradigms, the simulator demonstrates how modern wearable health infrastructures scale the handling of high-frequency sensor data while preserving low-latency medical triage feedback loops.
 
-**PULSE** adalah *engine* simulasi berbasis perangkat lunak untuk sistem pemantauan fisiologis atlet secara *real-time*. Proyek ini dirancang sebagai bentuk implementasi langsung dari teori arsitektur *embedded terdistribusi* (seperti pada perangkat biomedis berbasis STM32) yang dipetakan menjadi aplikasi perangkat lunak multi-proses murni.
+## 2. Key Features
+- **Distributed Queue Pipeline**: Implements sequential processing across virtual nodes connected through standard inter-process communication (IPC) messaging queues.
+- **Parallel Feature Extraction**: Evaluates 8 medical sensors concurrently using process pools to simulate multi-chip DSP (Digital Signal Processing).
+- **Real-time SCADA HMI**: Features a custom dark-themed GUI matching industrial medical dashboard standards, built on Tkinter & Matplotlib.
+- **Adaptive Phase Control**: Uses controller node logic to dynamically transition running phases (Resting, Warmup, Sprint, Cooldown, Recovery).
+- **Interactive Data Flow Visualizer**: Live rendering of ECG signals and dynamic calculation of composite metrics like Stress Index and Exertion Level.
+- **Non-Blocking Performance Benchmark**: Runs performance tests (Sequential vs. Parallel Pool execution) in a background thread to prevent UI freezing.
+- **Physiological Logging**: Automatically writes historical session logs and critical anomaly events to a structured CSV file asynchronously.
+- **Telemetry Analytics Panel**: Displays system latency, total steps, peak heart rate, and detection of critical anomalies.
 
-Menggunakan prinsip komputasi paralel untuk melampaui batasan Global Interpreter Lock (GIL) pada Python, PULSE menyimulasikan aliran data dari 8 sensor fisik berbeda secara asinkron, memproses *feature extraction* paralel penuh, dan menampilkannya pada dashboard SCADA secara sinkron dan interaktif.
+## 3. System Architecture
+The simulation operates as a linear distributed pipeline. Physiological data is acquired, analyzed, fused, and visualised across distinct processing units:
 
-## 📋 Daftar Isi
+| Node Identifier | Name | Responsibility | Output Channel |
+| --- | --- | --- | --- |
+| Node A | Sensor Nodes (Producers) | Simulates mock biomedical chips generating real-time signals (ECG, ACCEL, SPO2, ENV). | `RAW_DATA_Q` |
+| Node B | Fusion Engine (MIMD) | Evaluates sensor payloads to extract features (Heart Rate, Steps, Heat Index). | `FUSION_Q` |
+| Node C | Session Controller | Orchestrates session timing and running phase progression. | `CMD_Q` |
+| Node D | Dashboard GUI | Renders telemetry graphs, updates medical cards, and appends logs. | HMI Screen & CSV Logs |
 
-- [Fitur Utama](#-fitur-utama)
-- [Konsep Paralel yang Diterapkan](#-konsep-paralel-yang-diterapkan)
-- [Arsitektur Sistem](#-arsitektur-sistem)
-- [Prasyarat & Instalasi](#-prasyarat--instalasi)
-- [Cara Penggunaan](#-cara-penggunaan)
-- [Struktur Repositori](#-struktur-repositori)
-- [Lisensi](#-lisensi)
+## 4. Distributed System Design
+To represent physical distributed MCU chips, components are decoupled and run inside separate OS processes. Communication is strictly queue-based, enforcing unidirectional messaging and avoiding shared-memory state hazards:
 
----
+- **Asynchronous IPC**: Queues act as intermediate message brokers. Even if the Fusion Engine experiences a calculation spike, Sensor Nodes continue loading the `RAW_DATA_Q` safely.
+- **Non-Blocking GUI Integration**: The Dashboard pulls from the `FUSION_Q` efficiently using non-blocking checks to keep the GUI rendering at high FPS while maintaining real-time telemetry updates.
 
-## ✨ Fitur Utama
+## 5. Parallel Computing Implementation
+The Fusion Engine simulates DSP (Digital Signal Processing) over physiological data. Processing 8 sensors sequentially on a single core represents a bottleneck. The system leverages CPU parallelism by mapping feature extractions concurrently across a process worker pool:
 
-- **Simulasi Sinyal Realistis**: Generator sinyal sintetik fisiologis (ECG, Accelerometer, SpO2, Suhu, GSR, Laju Napas) yang berubah sesuai fase lari (Resting, Warmup, Sprint, Cooldown, Recovery).
-- **Dashboard SCADA**: Visualisasi *live chart* berkecepatan tinggi menggunakan kolaborasi `Tkinter` dan `Matplotlib`. Memiliki peringatan kondisi *emergency* yang responsif.
-- **Deteksi Anomali**: Triase medis secara langsung yang mendeteksi indikasi kondisi bahaya, misal hipoksia (SpO2 rendah), takipnea, atau hipertermia.
-- **Benchmarking Terintegrasi**: Mengukur *speedup* pemrosesan sekuensial vs paralel secara transparan untuk memvalidasi performa algoritma.
-- **Log Data Persisten**: Hasil pemrosesan direkam pada file `.csv` (*thread-safe* file writing).
+This ensures that complex mathematical calculations (like ECG zero-crossing and baseline wander filtering) are performed simultaneously, reducing processing latency from $O(N)$ (sequential) to $O(1)$ (parallel, where $N \le \text{available cores}$).
 
----
+## 6. Virtual Embedded System Architecture
+The software components are mapped directly to mimic real microcontroller unit (MCU) hardware boundaries, simulating a physical wearable IoT architecture:
 
-## 🧠 Konsep Paralel yang Diterapkan
+- **Virtual Sensor MCU**: Handles hardware interfaces (ADS1298, MPU6050 signal acquisition).
+- **Virtual Processing MCU**: Simulates DSP acceleration/processing at the edge gateway.
+- **Virtual Control MCU**: Acts as the physical state machine coordinator.
+- **Virtual HMI Dashboard**: The monitor display console.
 
-Sistem dibangun dari nol untuk merepresentasikan teori dari komputasi terdistribusi:
+## 7. Dashboard Features
+The Human-Machine Interface (HMI) provides a medical control dashboard panel:
 
-1. **MIMD (Multiple Instruction, Multiple Data)**
-   Memanfaatkan `multiprocessing.Pool`, di mana setiap unit data dari 8 tipe sensor (*Multiple Data*) diproses secara paralel menggunakan fungsi/jalur logika yang unik sesuai sensor tersebut (*Multiple Instructions*).
-2. **Pola Producer-Consumer (Pipeline Processing)**
-   Arsitektur aliran data diisolasi ke dalam 4 stage queue (*multiprocessing.Queue*):
-   `RAW_DATA_Q` ➔ `PROCESSED_Q` ➔ `FUSION_Q` ➔ `LOG_Q`.
-3. **Analisis Hukum Amdahl**
-   Menghitung fraksi paralel kode ($P$) dan limitasi teoretis kecepatan performa tak hingga ($N \to \infty$) melalui alat evaluasi internal (`benchmarker.py`).
-4. **Fault Tolerance & Penanganan Deadlock**
-   PULSE tahan terhadap fluktuasi latensi simulasi dan interupsi transmisi. Menerapkan 3 tingkat ekskalasi pemulihan: *Re-sample*, *Last Known Value fallback*, hingga *Node Exclusion*.
+- **SCADA Header Controls**: Displays session duration and allows toggling the START and STOP controls.
+- **Athlete Status Cards**: Displays live metrics (Heart Rate, SpO2, Skin Temp) and visually flashing critical alerts (e.g. Hypoxia, Fall Detected).
+- **Matplotlib Live Chart**: Plots real-time Lead-II ECG signals and fused composite metrics across the timeline, styled with transparency to fit the dark theme.
+- **System Node Monitors**: Status indicators representing active background queue processing and worker health.
+- **Parallel Performance Panel**: A benchmark module accessible via the UI that calculates Speedup and Efficiency.
 
----
+## 8. Benchmark Results
+The system includes a benchmarking module evaluating execution time differences between sequential loops and parallel process pools:
 
-## 📊 Arsitektur Sistem
+| Metric | Measured Value | Analysis & Performance Demonstration |
+| --- | --- | --- |
+| Sequential Execution Time | ~58.71 seconds | Simulates processing 8 sensors sequentially across 80 batches. Total sequential overhead is large due to individual processing delays. |
+| Parallel Execution Time | ~11.50 seconds | Evaluates 8 sensors simultaneously across independent CPU workers. Total time is drastically reduced. |
+| System Speedup | 5.10x | Displays the speedup ratio ($T_{seq} / T_{par}$). A speedup of 5.10x demonstrates significant core utilization. |
+| System Efficiency | 63.8% | Displays core utilization efficiency ($\text{Speedup} / \text{Cores} \times 100$). An efficiency of 63.8% is excellent considering the IPC messaging overhead in Python. |
+| Parallel Fraction P | 91.8% | Calculated via Amdahl's Law, representing the strict parallel nature of the engine. |
 
-Aliran data (*Data Flow*) didesain dalam bentuk graf tertutup seperti ini:
+*Note: Visual charts are automatically generated and saved to the `logs/` directory upon running the benchmark.*
 
-```mermaid
-graph TD
-    subgraph SN["Sensor Nodes (Producers)"]
-        E1[ECG Lead-I]
-        E2[ECG Lead-II]
-        A1[ACCEL 3-Axis]
-        S1[SPO2]
-        EN[ENV Multi]
-        Others[... + 3 Nodes]
-    end
+## 9. PULSE Analytics & Logging
+**Asynchronous CSV Logging**
+To maintain medical accountability and support historical audits, the dashboard saves incoming data into a structured CSV file. The file is created automatically if missing:
+- **Location**: `logs/session_log.csv` and `logs/summary.csv`
+- **CSV Headers**: `metric, value` (includes phase transitions, anomalies, and latency).
 
-    Q1[(RAW_DATA_Q)]
+To ensure logging write bottlenecks never block GUI rendering, logging writes are delegated to an independent thread-safe queue.
 
-    subgraph FE["Fusion Engine (MIMD)"]
-        W1[Worker 1]
-        W2[Worker 2]
-        W...[Worker 3-8]
-    end
+**Telemetry Computations**
+- **Heart Rate**: Averaged and cleaned from motion artifacts.
+- **Stress Index**: A composite score fusing HR, Skin Temperature, and Galvanic Skin Response (GSR).
+- **Exertion Level**: Dynamically tracks athlete fatigue zones based on the current phase constraints.
 
-    Q2[(FUSION_Q)]
-    Q3[(LOG_Q)]
+## 10. Installation & Requirements
+**Prerequisites**
+- Python 3.10+ (Ensure Python is added to the system environment path)
+- OS Support: Windows, Linux, or macOS
 
-    E1 & E2 & A1 & S1 & EN & Others --> |Enqueue| Q1
-    Q1 --> |Dequeue| W1 & W2 & W...
-    
-    W1 & W2 & W... --> |Fuse Metrics| Q2
-    W1 & W2 & W... -.-> |Anomalies/Events| Q3
-    
-    subgraph FO["Frontend/Output"]
-        D[Dashboard GUI]
-        L[Logger File]
-    end
-    
-    Q2 --> |Render| D
-    Q3 --> |Write CSV| L
+**Package Dependencies**
+The simulation utilizes standard libraries and Matplotlib. Install them using pip:
+```bash
+pip install -r req.txt
 ```
 
----
+## 11. How To Run
+Ensure you are located inside the root project directory.
 
-## 🛠️ Prasyarat & Instalasi
-
-Pastikan komputer/server Anda menggunakan **Python 3.10 atau lebih baru**. 
-
-1. **Clone repositori**
-   ```bash
-   git clone https://github.com/username/PULSE-Engine.git
-   cd PULSE-Engine
-   ```
-
-2. **Buat Virtual Environment (Direkomendasikan)**
-   ```bash
-   # Windows
-   python -m venv .venv
-   .venv\Scripts\activate
-
-   # Linux/macOS
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. **Install Dependensi**
-   ```bash
-   pip install -r req.txt
-   ```
-   *Catatan: Pustaka pihak ketiga yang digunakan hanya `numpy`, `matplotlib`, dan `psutil`.*
-
----
-
-## 🚀 Cara Penggunaan
-
-Gunakan *entry point* dari `main.py` untuk menjalankan aplikasi:
-
+**A. Full Distributed Pipeline Mode (Primary Execution)**
+To launch the GUI Dashboard alongside parallel IPC queues:
 ```bash
 python main.py
 ```
+**Behavior**: You will see logs printing in the console from initialization stages. The GUI will open in FULL SCREEN MODE.
+**Clean Exit**: Closing the GUI window or pressing `Escape` to exit fullscreen then `X`, automatically signals background processes to stop and terminates them cleanly.
 
-*(Untuk OS Windows Command Prompt / PowerShell, tambahkan flag UTF-8 jika tabel pada console acak-acakan)*:
-```bash
-python -X utf8 main.py
-```
-
-### Operasional Dashboard
-
-1. **Memulai Sesi**: Klik tombol `▶ START` pada menu navigasi bawah untuk memulai pengambilan sampel.
-2. **Monitoring Fase**: Lari akan berganti fase secara otomatis (RESTING ➔ WARMUP ➔ SPRINT ➔ COOLDOWN ➔ RECOVERY). 
-3. **Benchmarking**: Klik tombol `📊 BENCHMARK`. Sistem akan mensimulasikan tugas pemrosesan *heavy-load* di *background*, dan di akhir akan melaporkan kalkulasi efisiensi dan mencetak grafik `.png` pada direktori `logs/`.
-4. **Penyimpanan**: Klik `💾 SAVE LOG` untuk mengekstrak rangkuman sesi pada `logs/summary.csv`.
-
----
-
-## 📁 Struktur Repositori
-
+## 12. Project Structure
 ```text
 PULSE/
-├── main.py                # Titik masuk aplikasi, orchestrator startup/shutdown
-├── config.py              # Konfigurasi global (Warna UI, Parameter Sistem, Range Medis)
-├── dashboard.py           # GUI SCADA Tkinter & Visualisasi Matplotlib
-├── benchmarker.py         # Analisis performa sekuensial vs paralel (Amdahl's Law)
-├── fusion_engine.py       # Engine perhitungan feature extraction multiprocess (MIMD)
-├── queue_manager.py       # Abstraksi multiprocessing.Queue Pipeline
-├── session_controller.py  # Sistem state-machine fase sesi & kolektor sampel
-├── sensor_nodes.py        # Simulasi/Generator Sinyal Wearable Biomedis
-├── logger.py              # Sistem persisten data dan terminal log writer
-├── req.txt                # Berkas dependensi pustaka
-└── logs/                  # [Dihasilkan] Direktori penyimpanan CSV / Grafik
+├── main.py                # Initial single-run project launcher & orchestrator
+├── dashboard.py           # Main Tkinter SCADA HMI Dashboard & Matplotlib visualizer
+├── benchmarker.py         # Multiprocessing benchmark module (Amdahl's Law)
+├── fusion_engine.py       # Node B: Parallel feature extraction engine (MIMD)
+├── queue_manager.py       # IPC Queue abstraction manager
+├── session_controller.py  # Node C: State machine for session phases
+├── sensor_nodes.py        # Node A: Traffic/Signal volume generator simulation
+├── config.py              # Global settings and layout config
+├── logger.py              # Asynchronous file logging and terminal printer
+├── req.txt                # Package dependencies
+└── logs/                  # Automatically generated CSV telemetry logs and charts
+└── docs/                  # Additional markdown documentation and generated diagrams
 ```
-
----
-
-## 📄 Lisensi
-
-Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih lanjut.
-
-<p align="right">(<a href="#readme-top">kembali ke atas</a>)</p>
+Presented inside a clean, modern SCADA HMI dashboard, this project stands as a fully integrated showcase of Parallel Computing and Distributed Systems principles.
