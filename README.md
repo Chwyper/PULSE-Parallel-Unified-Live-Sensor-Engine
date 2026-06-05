@@ -1,6 +1,6 @@
 # Distributed Wearable Athlete Simulator (PULSE)
-KELOMPOK TUGAS IFB-206 KOMPUTASI PARAREL & SYSTEM TERDISTRIBUSI
-Member 1 : Najwa Hikmatyar - 152024162
+TUGAS IFB-206 KOMPUTASI PARAREL & SYSTEM TERDISTRIBUSI
+Najwa Hikmatyar - 152024162
 
 Parallel Computing & Distributed Systems Simulation
 
@@ -28,6 +28,8 @@ By combining these paradigms, the simulator demonstrates how modern wearable hea
 
 ## 3. System Architecture
 The simulation operates as a linear distributed pipeline. Physiological data is acquired, analyzed, fused, and visualised across distinct processing units:
+
+![System Architecture Flowchart](docs/flowchart.png)
 
 | Node Identifier | Name | Responsibility | Output Channel |
 | --- | --- | --- | --- |
@@ -66,6 +68,8 @@ The Human-Machine Interface (HMI) provides a medical control dashboard panel:
 
 ## 8. Benchmark Results
 The system includes a benchmarking module evaluating execution time differences between sequential loops and parallel process pools:
+
+![Benchmark Results Analysis](docs/benchmark_chart.png)
 
 | Metric | Measured Value | Analysis & Performance Demonstration |
 | --- | --- | --- |
