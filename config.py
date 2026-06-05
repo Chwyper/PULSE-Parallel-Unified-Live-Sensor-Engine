@@ -235,8 +235,8 @@ RECOVERY_BACKOFF_S    = 0.8   # detik — interval dasar backoff antar percobaan
 #  Setiap benchmark diulang BENCHMARK_REPEAT kali lalu diambil rata-rata.
 # =============================================================================
 
-BENCHMARK_TASK_COUNT = 80   # jumlah task per satu run benchmark
-BENCHMARK_REPEAT     = 3    # jumlah run untuk rata-rata pengukuran
+BENCHMARK_TASK_COUNT = 15   # dipercepat untuk demo (aslinya 80)
+BENCHMARK_REPEAT     = 2    # dipercepat untuk demo (aslinya 3)
 
 # =============================================================================
 #  SECTION 11: DASHBOARD CONFIG
